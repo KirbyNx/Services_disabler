@@ -1,0 +1,155 @@
+#-----------Dynamic Installer Configs-----------#
+#The #MAGISK tag is required, dont remove it
+#MAGISK
+setdefault magisk_support off
+setdefault extraction_speed default
+setdefault run_addons off
+setdefault apex_mount off
+setdefault devices off
+#-----------------------------------------------#
+#Your script starts here:
+
+#Print
+ui_print " "
+fprint_zip banner.txt
+ui_print " "
+
+#Mount
+ui_print " -- Mounting /system /vendor /product "
+auto_mount_partitions
+
+#Get device info
+model=$(grep_cmdline androidboot.em.model)
+ui_print " -- Working on $model with $chipname chipset "
+
+#Frp
+if $(cat "/vendor/build.prop" | grep -q "ro.frp.pst=/dev/block/persistent"); then
+   ui_print " -- Disabling frp... "
+   update_file_string 'ro.frp.pst= ' /vendor/build.prop
+else
+   ui_print " -- Frp is already disabled "
+fi
+
+#cass
+if exist /vendor/bin/cass; then
+   ui_print " -- Disabling cass... "
+   replace "service cass /vendor/bin/cass" "# service cass /vendor/bin/cass" /vendor/etc/init/cass.rc
+   replace "    class core" "#    class core" /vendor/etc/init/cass.rc
+   replace "    user system" "#    user system" /vendor/etc/init/cass.rc
+   replace "    group radio wakelock system" "#    group radio wakelock system" /vendor/etc/init/cass.rc
+   replace "    capabilities BLOCK_SUSPEND" "#    capabilities BLOCK_SUSPEND" /vendor/etc/init/cass.rc
+   replace "    disabled" "#    disabled" /vendor/etc/init/cass.rc
+   replace "on post-fs-data" "# on post-fs-data" /vendor/etc/init/cass.rc
+   replace "    start cass" "#    start cass" /vendor/etc/init/cass.rc
+   delete /vendor/bin/cass
+else
+   ui_print " -- Cass is already disabled "
+fi
+
+#vaultkeeperd
+if exist /vendor/bin/vaultkeeperd; then
+   ui_print " -- Disabling vaultkeeperd... "
+   replace "service vaultkeeper /vendor/bin/vaultkeeperd" "# service vaultkeeper /vendor/bin/vaultkeeperd" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    class core" "#    class core" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    user system" "#     user system" /vendor/etc/init/vaultkeeper_common.rc
+   replace "     group system" "#    group system" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    disabled" "#    disabled" /vendor/etc/init/vaultkeeper_common.rc
+   replace "service vaultkeeper_hal" "# service vaultkeeper_hal" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    class early_hal" "#    class early_hal" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    user system" "#    user system" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    group system" "#    group system" /vendor/etc/init/vaultkeeper_common.rc
+   replace "     disabled" "#    disabled" /vendor/etc/init/vaultkeeper_common.rc
+   replace "on late-fs" "# on late-fs" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    # vaultkeeper" "#    vaultkeeper" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    mkdir /dev/socket/vaultkeeper 0770 system system" "#    mkdir /dev/socket/vaultkeeper 0770 system system" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    start vaultkeeper" "#    start vaultkeeper" /vendor/etc/init/vaultkeeper_common.rc
+   replace "    start vaultkeeper_hal" "#    start vaultkeeper_hal" /vendor/etc/init/vaultkeeper_common.rc
+   replace "start" "stop" /product/etc/init/init.rc
+   delete /vendor/bin/vaultkeeperd
+   delete /vendor/etc/vintf/manifest/vaultkeeper_manifest.xml
+   force_update_file_string "ro.security.vaultkeeper.native=0" "/vendor/build.prop"
+   force_update_file_string "ro.security.vaultkeeper.feature=0" "/vendor/build.prop"
+else
+   ui_print " -- Vaultkeeperd is already disabled "
+fi
+
+#proca snapdragon
+if [[ "$chipname" == "snapdragon" ]]; then
+   if $(cat "/vendor/etc/init/pa_daemon_qsee.rc" | grep -q "# service proca"); then
+      ui_print " -- Proca is already disabled "
+   else
+      ui_print " -- Disabling proca... "
+      replace "service proca" "# service proca" /vendor/etc/init/pa_daemon_qsee.rc
+      replace "    class early_hal" "#    class early_hal" /vendor/etc/init/pa_daemon_qsee.rc
+      replace "    user system" "#    user system" /vendor/etc/init/pa_daemon_qsee.rc
+      replace "    group system" "#    group system" /vendor/etc/init/pa_daemon_qsee.rc
+      replace "    disabled" "#    disabled" /vendor/etc/init/pa_daemon_qsee.rc
+      replace "on late-fs" "# on late-fs" /vendor/etc/init/pa_daemon_qsee.rc
+      replace "    wait_for_prop vendor.sys.qseecomd.enable true" "#    wait_for_prop vendor.sys.qseecomd.enable true" /vendor/etc/init/pa_daemon_qsee.rc
+      replace "    start proca" "#    start proca" /vendor/etc/init/pa_daemon_qsee.rc
+   fi
+fi
+
+#proca exynos
+if [[ "$chipname" == "exynos" ]]; then
+   if $(cat "/vendor/etc/init/pa_daemon_teegris.rc" | grep -q "# service proca"); then
+      ui_print " -- Proca is already disabled "
+   else
+      ui_print " -- Disabling proca... "
+	  replace "service proca" "# service proca" /vendor/etc/init/pa_daemon_teegris.rc
+	  replace "    class early_hal" "#    class early_hal" /vendor/etc/init/pa_daemon_teegris.rc
+	  replace "    user system" "#    user system" /vendor/etc/init/pa_daemon_teegris.rc
+	  replace "    group system" "#    group system" /vendor/etc/init/pa_daemon_teegris.rc
+	  replace "    disabled" "#    disabled" /vendor/etc/init/pa_daemon_teegris.rc
+	  replace "on property:sys.tzdaemon=Ready" "# on property:sys.tzdaemon=Ready" /vendor/etc/init/pa_daemon_teegris.rc
+	  replace "    start proca" "#    start proca" /vendor/etc/init/pa_daemon_teegris.rc
+	  replace "on late-fs && property:vendor.tzdaemon=Ready" "# on late-fs && property:vendor.tzdaemon=Ready" /vendor/etc/init/pa_daemon_teegris.rc
+	  replace "    start proca" "#    start proca" /vendor/etc/init/pa_daemon_teegris.rc
+   fi
+fi
+
+#proca manifest
+if $(cat "/vendor/etc/vintf/manifest.xml" | grep -q "<name>vendor.samsung.hardware.security.proca</name>"); then
+   ui_print " -- Disabling proca manifest... "
+   proca=$(string -f "/vendor/etc/vintf/manifest.xml" -r -p "ISehProca" complete_extract 'format="hidl"' '</hal>')
+   replace "$proca" "" /vendor/etc/vintf/manifest.xml
+else
+	ui_print " -- Proca manifest is already disabled "
+fi
+
+#wsm
+if $(cat "/vendor/etc/vintf/manifest.xml" | grep -q "<name>vendor.samsung.hardware.security.wsm</name>"); then
+   ui_print " -- Disabling wsm... "
+   wsm=$(string -f "/vendor/etc/vintf/manifest.xml" -r -p "ISehWsm" complete_extract 'format="hidl"' '</hal>')
+   replace "$wsm" "" /vendor/etc/vintf/manifest.xml
+else
+	ui_print " -- Wsm is already disabled "
+fi
+
+#fstab
+# S20/N20 range = fstab.exynos990.
+# S10 range = fstab.exynos9820.
+# Note 10 range = fstab.exynos9825.
+# A[124]0 range = fstab.exynos7885.
+# A50 = fstab.exynos9610.
+# Tab A 10.1 range = fstab.exynos7885.
+# Old Snapdragon devices = fstab.qcom
+# New Snapdragon devices = fstab.default
+for fstab in $(find /vendor/etc -type f -name "fstab.*"); do
+   if $(cat "$fstab" | grep -q "encryptable=ice"); then
+      ui_print " -- $fstab is already patched "
+   else
+      ui_print " -- Patching $fstab... "
+      replace "fileencryption" "encryptable" $fstab
+   fi
+done
+
+#BluetoothFix
+flash_addon log1 BluetoothFix.zip
+
+#Unmount 
+ui_print " -- Unmounting /system /vendor /product "
+umount_all 
+
+ui_print " "
+
