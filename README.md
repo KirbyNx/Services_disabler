@@ -1,4 +1,4 @@
-# Services_disabler
+# Services disabler
 Disable security and services of Samsung devices
 
 ## Services to disable
