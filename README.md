@@ -1,6 +1,6 @@
 # Services disabler
 Disable security and services of Samsung devices
-Proyect based on Dynamic Installer bye BlassGO
+Proyect based on Dynamic Installer by BlassGO
 
 ## Services
 - Frp
