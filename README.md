@@ -2,6 +2,8 @@
 Disable security and services of Samsung devices
 Proyect based on Dynamic Installer by BlassGO
 
+This is inspired in multididabler by ianmacd
+
 ## Services
 - Frp
 - Cass
