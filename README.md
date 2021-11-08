@@ -6,6 +6,7 @@ Proyect based on Dynamic Installer by BlassGO
 - Frp
 - Cass
 - vaultkeeperd
+- SCS
 - proca
 - wsm
 - encryption (fstab file)
